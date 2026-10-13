@@ -1,0 +1,359 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0c131a">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+<title>Hybrid Pro 6-Week Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: sticky header → goal + timer strip → week/day selector → exercise cards → swim card */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --sunk:#e3e8ee; --line:#cfd7e0;
+  --fg:#14202c; --muted:#5b6b7b; --accent:#0a6fa8; --accent-ink:#ffffff; --accent-soft:#d6e9f5;
+  --good:#1f8a52; --good-soft:#dcf1e5; --warn:#a8650a; --warn-soft:#fbeed8; --bad:#b4372f;
+  --display:"Barlow Condensed","Arial Narrow",sans-serif; --body:"Barlow",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c131a; --surface:#131d27; --sunk:#0f1820; --line:#24333f;
+  --fg:#e6edf3; --muted:#8a9bab; --accent:#3fb0e8; --accent-ink:#06121b; --accent-soft:#12324a;
+  --good:#46c483; --good-soft:#12301f; --warn:#e3a54a; --warn-soft:#33240e; --bad:#f07068; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0c131a; --surface:#131d27; --sunk:#0f1820; --line:#24333f;
+  --fg:#e6edf3; --muted:#8a9bab; --accent:#3fb0e8; --accent-ink:#06121b; --accent-soft:#12324a;
+  --good:#46c483; --good-soft:#12301f; --warn:#e3a54a; --warn-soft:#33240e; --bad:#f07068; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.label{font-family:var(--display);font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:13px;color:var(--muted)}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--surface);border-bottom:1px solid var(--line)}
+.hwrap{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand h1{margin:0;font-family:var(--display);font-weight:800;font-size:24px;letter-spacing:.02em;line-height:1}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:4px 10px;font-size:13px;color:var(--muted)}
+.chip b{color:var(--fg);font-family:var(--mono);font-weight:700}
+
+main{max-width:1080px;margin:0 auto;padding:18px 16px 60px;display:grid;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.top{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+@media (max-width:760px){.top{grid-template-columns:1fr}}
+
+.goal-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.goal-head p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.e1rm{text-align:right}
+.e1rm .big{font-family:var(--display);font-weight:800;font-size:40px;line-height:1}
+.e1rm small{font-size:13px;color:var(--muted)}
+.bar{margin-top:14px;height:12px;background:var(--sunk);border-radius:3px;overflow:hidden;position:relative}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .5s}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:6px;gap:8px}
+
+.timer{display:flex;flex-direction:column;gap:10px}
+.timer .clock{font-family:var(--mono);font-weight:700;font-size:40px;line-height:1}
+.timer .clock.live{color:var(--accent)}
+.presets{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--sunk);border-radius:6px;padding:6px 10px;font-weight:600;font-size:13px}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.stop{color:var(--bad)}
+.tbar{height:4px;background:var(--sunk);border-radius:2px;overflow:hidden}
+.tbar i{display:block;height:100%;background:var(--accent);transition:width 1s linear}
+
+.weeks{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;border-bottom:1px solid var(--line);margin-bottom:12px}
+.wk{flex:0 0 auto;border:1px solid var(--line);background:var(--sunk);border-radius:6px;padding:7px 12px;font-family:var(--display);font-weight:700;font-size:15px;letter-spacing:.03em;display:flex;gap:6px;align-items:center}
+.wk.on{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.wk .pct{font-family:var(--mono);font-size:11px;opacity:.8}
+.days{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.day{text-align:left;border:1px solid var(--line);background:var(--sunk);border-radius:8px;padding:9px 10px;min-width:0}
+.day.on{border-color:var(--accent);box-shadow:inset 0 -3px 0 var(--accent);background:var(--surface)}
+.day .d{display:flex;justify-content:space-between;align-items:center;font-family:var(--display);font-weight:800;font-size:15px}
+.day .t{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day .p{font-family:var(--mono);font-size:11px;color:var(--accent)}
+.day .ok{color:var(--good)}
+
+.dayhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.dayhead h2{margin:4px 0 2px;font-family:var(--display);font-weight:800;font-size:28px;line-height:1.05;text-wrap:balance}
+.dayhead .focus{color:var(--muted);font-size:14px}
+.ring{display:flex;align-items:center;gap:10px}
+.ring svg{width:52px;height:52px}
+.ring .v{font-family:var(--mono);font-weight:700;font-size:18px}
+
+.ex h3{margin:0;font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.01em}
+.ex .note{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.exhead{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-bottom:10px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.rx{align-self:flex-start;font-size:13px;background:var(--sunk);border:1px solid var(--line);border-radius:6px;padding:4px 9px;white-space:nowrap}
+.rx b{font-family:var(--mono)}
+.rows{display:grid;gap:6px}
+.row{display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px;border-radius:7px;border:1px solid transparent}
+.row.hd{padding-block:0;font-size:11px}
+.row.done{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 35%,transparent)}
+.row .n{font-family:var(--mono);font-size:13px;color:var(--muted);padding-left:4px}
+.field{display:flex;align-items:center;gap:6px}
+.field input{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;font-family:var(--mono);font-weight:700;font-size:15px}
+.field span{font-size:12px;color:var(--muted)}
+@media (max-width:480px){.field span{display:none}}
+.acts{display:flex;gap:4px}
+.chk{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--sunk);display:grid;place-items:center}
+.chk.on{background:var(--good);border-color:var(--good);color:var(--surface)}
+.del{width:30px;height:38px;border:0;background:none;color:var(--muted);border-radius:6px}
+.del:hover{color:var(--bad)}
+.add{margin-top:8px;display:flex;justify-content:flex-end}
+
+.swim{border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:linear-gradient(180deg,var(--accent-soft),var(--surface) 70%)}
+.swimhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.swim h3{margin:0;font-family:var(--display);font-weight:700;font-size:20px}
+.swim p{margin:2px 0 0;font-size:13px;color:var(--muted)}
+.swim .btn.on{background:var(--good);border-color:var(--good);color:var(--surface)}
+.swim label{display:block;margin:12px 0 4px;font-size:13px;color:var(--muted)}
+.swim input{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+
+.recov{background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 40%,transparent);border-radius:10px;padding:14px 16px;color:var(--fg);font-size:14px}
+.recov b{color:var(--warn);font-family:var(--display);font-size:16px;letter-spacing:.03em;text-transform:uppercase}
+.recov p{margin:4px 0 0}
+
+.foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.confirm{display:flex;gap:6px;align-items:center}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<header>
+  <div class="hwrap">
+    <div class="brand">
+      <h1>HYBRID PRO 6-WEEK LOG</h1>
+      <p>33yo Male · 220 lbs · Recomp &amp; 225 lb Bench Focus</p>
+    </div>
+    <div class="chips">
+      <span class="chip">Calories <b>2,200</b>/day</span>
+      <span class="chip">Macros <b>180P / 200C / 85F</b></span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="top">
+    <div class="panel">
+      <div class="goal-head">
+        <div>
+          <div class="label">Bench Press Goal Tracker</div>
+          <p>Goal: <strong>225 lbs × 5</strong> (≈262 lb est. 1RM, Epley)</p>
+        </div>
+        <div class="e1rm">
+          <div class="big num" id="e1rm">185</div>
+          <small>lbs est. 1RM</small>
+          <div class="num" id="best" style="font-size:12px;color:var(--accent)"></div>
+        </div>
+      </div>
+      <div class="bar"><i id="benchbar" style="width:10%"></i></div>
+      <div class="ticks"><span>Baseline 185 1RM</span><span class="num" id="benchpct">0% to target</span><span>Target 225 × 5</span></div>
+    </div>
+
+    <div class="panel timer">
+      <div class="label">Inter-Set Rest Timer</div>
+      <div class="clock num" id="clock">0:00</div>
+      <div class="tbar"><i id="tbar" style="width:0"></i></div>
+      <div class="presets" id="presets"></div>
+      <button class="btn primary" id="tmain" type="button">Start 2m Rest</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="weeks" id="weeks"></div>
+    <div class="days" id="days"></div>
+  </section>
+
+  <section id="dayview" style="display:grid;gap:16px"></section>
+
+  <div class="foot">
+    <span>Logs save in this browser only.</span>
+    <span class="confirm" id="resetbox"><button class="btn" id="reset" type="button">Reset all logs</button></span>
+  </div>
+</main>
+
+<script>
+// ---------- Program ----------
+const E=(name,sets,reps,w,note)=>({name,sets,targetReps:reps,targetWeight:w,note});
+const recovery=(focus,notes,swimType)=>({title:"Active Recovery & Spine Care",focus,isRecovery:true,
+  exercises:[E("Bird-Dogs",3,"10 / side",0,notes[0]),E("Dead Bugs",3,"10 / side",0,notes[1]),E("Cat-Cow Flow",3,"60 sec",0,notes[2])],
+  swim:{required:false,targetDuration:0,type:swimType}});
+const SW=t=>({required:true,targetDuration:45,type:t});
+const P={
+1:{Mon:{title:"Chest & Triceps + Swim",focus:"Bench Press Strength & Triceps Lockout",exercises:[E("Barbell Bench Press",4,"5",145,"3 min rest between sets. Focus on leg drive."),E("Incline DB Press",3,"8-10",50,"90 sec rest."),E("Seated Cable Flyes",3,"12",30,"Focus on controlled chest stretch."),E("Weighted/Assisted Dips",3,"8-10",0,"Use bodyweight or slight assist as needed."),E("Overhead Cable Triceps Ext",3,"12",40,"Squeeze lockout at top.")],swim:SW("45-Min Moderate Lap Swim")},
+ Tue:{title:"Back & Biceps + Swim",focus:"Upper Back Density for Pressing Base",exercises:[E("Chest-Supported Row",4,"8-10",115,"Pads protect lower spine."),E("Lat Pulldown (Wide)",3,"10-12",120,"Pull smooth to upper chest."),E("1-Arm DB Row (Bench)",3,"10",50,"Supported on bench for back safety."),E("Standing DB Bicep Curl",3,"10-12",30,"Controlled eccentric."),E("Incline Cable Curl",3,"12",25,"Constant cable tension.")],swim:SW("45-Min Interval Swimming")},
+ Wed:recovery("Core Stability & Lower Back Decompression",["2-sec pause at extension. Do not arch back.","Press lower back firmly into floor.","Rhythmic gentle spinal flex and extension."],"Rest / Optional Walk"),
+ Thu:{title:"Shoulders, Legs + Swim",focus:"Spine & Knee Safe Hypertrophy",exercises:[E("Seated DB Shoulder Press",4,"8-10",40,"Back pressed firmly into pad."),E("DB Lateral Raises",4,"12-15",20,"Lead with elbows."),E("Leg Press Machine",4,"10-12",225,"Neutral foot placement. Smooth 3s descent. Don't lock out knees."),E("Seated Leg Curls",3,"12-15",100,"Hamstring isolation."),E("Standing Calf Raises",3,"15",120,"Pause at stretch.")],swim:SW("45-Min Steady-State Swim")},
+ Fri:{title:"Upper Speed/Pause Bench + Swim",focus:"Explosive Chest Power & Triceps",exercises:[E("Pause Bench Press",3,"8",130,"1 full second pause on sternum."),E("Close-Grip Bench Press",3,"8",115,"Triceps lockout focus."),E("Seated Cable Face Pulls",3,"15",40,"Rear delt & cuff health."),E("DB Hammer Curls",3,"10-12",30,"Brachialis build.")],swim:SW("45-Min Recovery Swim")}},
+2:{Mon:{title:"Chest & Triceps + Swim",focus:"Bench Progression (+10 lbs)",exercises:[E("Barbell Bench Press",4,"5",155,"Tuck elbows 45 degrees."),E("Incline DB Press",3,"8-10",55,"Solid chest push."),E("Seated Cable Flyes",3,"12",30,"Squeeze center."),E("Weighted/Assisted Dips",3,"8-10",0,"Bodyweight focus."),E("Overhead Cable Triceps Ext",3,"12",45,"Strict form.")],swim:SW("45-Min Moderate Lap Swim")},
+ Tue:{title:"Back & Biceps + Swim",focus:"Heavy Pulling Base",exercises:[E("Chest-Supported Row",4,"8-10",125,"Drive elbows back."),E("Lat Pulldown (Wide)",3,"10-12",130,"Full vertical pull."),E("1-Arm DB Row (Bench)",3,"10",55,"Keep hips level."),E("Standing DB Bicep Curl",3,"10-12",30,"Strict curl."),E("Incline Cable Curl",3,"12",25,"Peak contraction.")],swim:SW("45-Min Interval Swimming")},
+ Wed:recovery("Decompression & Mobility",["Core activation.","Spine flush.","Gentle mobility."],"Rest / Light Walk"),
+ Thu:{title:"Shoulders, Legs + Swim",focus:"Progressive Resistance",exercises:[E("Seated DB Shoulder Press",4,"8-10",45,"Press tall."),E("DB Lateral Raises",4,"12-15",20,"Delts burn."),E("Leg Press Machine",4,"10-12",250,"Push through heels."),E("Seated Leg Curls",3,"12-15",110,"Smooth pull."),E("Standing Calf Raises",3,"15",130,"Full range.")],swim:SW("45-Min Steady-State Swim")},
+ Fri:{title:"Upper Speed/Pause Bench + Swim",focus:"Chest Speed & Triceps",exercises:[E("Pause Bench Press",3,"8",140,"Explode off chest."),E("Close-Grip Bench Press",3,"8",125,"Strong lockout."),E("Seated Cable Face Pulls",3,"15",45,"High pull."),E("DB Hammer Curls",3,"10-12",35,"Strong grip.")],swim:SW("45-Min Recovery Swim")}},
+3:{Mon:{title:"Chest & Triceps + Swim",focus:"Bench Overload (165 lbs)",exercises:[E("Barbell Bench Press",4,"5",165,"Maintain arch & tight lat base."),E("Incline DB Press",3,"8-10",55,"Solid press."),E("Seated Cable Flyes",3,"12",35,"Control cables."),E("Weighted/Assisted Dips",3,"8-10",0,"Bodyweight."),E("Overhead Cable Triceps Ext",3,"12",45,"Heavy lock.")],swim:SW("45-Min Moderate Lap Swim")},
+ Tue:{title:"Back & Biceps + Swim",focus:"Mid-Cycle Back Strength",exercises:[E("Chest-Supported Row",4,"8-10",135,"Chest firmly on pad."),E("Lat Pulldown (Wide)",3,"10-12",135,"Full stretch."),E("1-Arm DB Row (Bench)",3,"10",60,"Heavy row."),E("Standing DB Bicep Curl",3,"10-12",35,"Control weight."),E("Incline Cable Curl",3,"12",30,"Constant tension.")],swim:SW("45-Min Interval Swimming")},
+ Wed:recovery("Spine & Core Maintenance",["Focus stability.","Lower back down.","Rhythmic flow."],"Rest Day"),
+ Thu:{title:"Shoulders, Legs + Swim",focus:"Leg Press Progression",exercises:[E("Seated DB Shoulder Press",4,"8-10",50,"Heavy shoulder press."),E("DB Lateral Raises",4,"12-15",22.5,"Strict form."),E("Leg Press Machine",4,"10-12",275,"Controlled down, drive up."),E("Seated Leg Curls",3,"12-15",115,"Hamstring flex."),E("Standing Calf Raises",3,"15",140,"Pause at top.")],swim:SW("45-Min Steady-State Swim")},
+ Fri:{title:"Upper Speed/Pause Bench + Swim",focus:"Pause Bench Peak (150 lbs)",exercises:[E("Pause Bench Press",3,"6",150,"Dead stop pause on chest."),E("Close-Grip Bench Press",3,"8",130,"Triceps overload."),E("Seated Cable Face Pulls",3,"15",50,"Posterior focus."),E("DB Hammer Curls",3,"10-12",35,"Forearm & biceps.")],swim:SW("45-Min Recovery Swim")}},
+4:{Mon:{title:"Chest & Triceps + Swim",focus:"Heavy Triples (175 lbs)",exercises:[E("Barbell Bench Press",4,"3",175,"Heavy triples. High focus & leg drive."),E("Incline DB Press",3,"8-10",60,"Drive heavy dumbbells."),E("Seated Cable Flyes",3,"12",35,"Chest squeeze."),E("Weighted/Assisted Dips",3,"8-10",0,"Bodyweight dips."),E("Overhead Cable Triceps Ext",3,"12",50,"Triceps power.")],swim:SW("45-Min Moderate Lap Swim")},
+ Tue:{title:"Back & Biceps + Swim",focus:"Heavy Upper Back Load",exercises:[E("Chest-Supported Row",4,"8-10",140,"Squeeze shoulder blades."),E("Lat Pulldown (Wide)",3,"10-12",140,"Wide grip drive."),E("1-Arm DB Row (Bench)",3,"10",65,"Strong pull."),E("Standing DB Bicep Curl",3,"10-12",35,"Solid arm work."),E("Incline Cable Curl",3,"12",30,"Isolation.")],swim:SW("45-Min Interval Swimming")},
+ Wed:recovery("Spine Relief",["Slow & stable.","Control breath.","Spine mobilization."],"Rest Day"),
+ Thu:{title:"Shoulders, Legs + Swim",focus:"Lower Body Heavy Push",exercises:[E("Seated DB Shoulder Press",4,"8-10",50,"Press strong."),E("DB Lateral Raises",4,"12-15",22.5,"Side delts."),E("Leg Press Machine",4,"10-12",295,"Deep range, zero lower back lifting."),E("Seated Leg Curls",3,"12-15",120,"Hamstring work."),E("Standing Calf Raises",3,"15",150,"Calf stretch.")],swim:SW("45-Min Steady-State Swim")},
+ Fri:{title:"Upper Speed/Pause Bench + Swim",focus:"Pause Power (155 lbs)",exercises:[E("Pause Bench Press",3,"6",155,"Solid chest pause."),E("Close-Grip Bench Press",3,"8",135,"Triceps power."),E("Seated Cable Face Pulls",3,"15",50,"Rear delts."),E("DB Hammer Curls",3,"10-12",40,"Arm thickness.")],swim:SW("45-Min Recovery Swim")}},
+5:{Mon:{title:"Chest & Triceps + Swim",focus:"Peak Neural Adaptation (185 lbs)",exercises:[E("Barbell Bench Press",3,"3",185,"Previous 1RM weight for 3 reps! Explosive force."),E("Incline DB Press",3,"8-10",60,"Incline power."),E("Seated Cable Flyes",3,"12",40,"Chest finish."),E("Weighted/Assisted Dips",3,"8-10",0,"Bodyweight dips."),E("Overhead Cable Triceps Ext",3,"12",50,"Lockout strength.")],swim:SW("45-Min Moderate Lap Swim")},
+ Tue:{title:"Back & Biceps + Swim",focus:"Peak Row Strength",exercises:[E("Chest-Supported Row",4,"8-10",145,"Heavy back row."),E("Lat Pulldown (Wide)",3,"10-12",145,"Heavy pulldowns."),E("1-Arm DB Row (Bench)",3,"10",65,"Supported pull."),E("Standing DB Bicep Curl",3,"10-12",40,"Bicep power."),E("Incline Cable Curl",3,"12",35,"Continuous squeeze.")],swim:SW("45-Min Interval Swimming")},
+ Wed:recovery("Pre-Test Rest & Mobility",["Gentle activation.","Core activation.","Decompress back."],"Rest Day"),
+ Thu:{title:"Shoulders, Legs + Swim",focus:"Heavy Leg Press (315 lbs)",exercises:[E("Seated DB Shoulder Press",4,"8-10",55,"Peak shoulder press."),E("DB Lateral Raises",4,"12-15",25,"Lateral delt fly."),E("Leg Press Machine",4,"10-12",315,"3 plates per side equivalent."),E("Seated Leg Curls",3,"12-15",125,"Hamstrings."),E("Standing Calf Raises",3,"15",160,"Heavy calves.")],swim:SW("45-Min Steady-State Swim")},
+ Fri:{title:"Upper Speed/Pause Bench + Swim",focus:"Final Pause Practice",exercises:[E("Pause Bench Press",3,"5",165,"Final pause bench before test week."),E("Close-Grip Bench Press",3,"8",140,"Heavy CG Bench."),E("Seated Cable Face Pulls",3,"15",55,"Shoulder stability."),E("DB Hammer Curls",3,"10-12",40,"Grip & bicep strength.")],swim:SW("45-Min Recovery Swim")}},
+6:{Mon:{title:"Bench Press Test Day",focus:"TEST DAY: Hit 205–225 lbs for 5 reps",exercises:[E("Barbell Bench Press (TEST DAY)",1,"5",225,"Warm up with 135x5, 175x3, 205x1. Go for 225 lbs x 5 reps with a spotter!"),E("Incline DB Press",3,"8",65,"Moderate accessory load."),E("Seated Cable Flyes",3,"12",40,"Flush chest."),E("Weighted/Assisted Dips",3,"8",10,"Bodyweight + 10 lbs if feeling strong!"),E("Overhead Cable Triceps Ext",3,"12",55,"Final triceps squeeze.")],swim:SW("45-Min Celebration Swim")},
+ Tue:{title:"Back & Biceps + Swim",focus:"Max Strength Cycle Complete",exercises:[E("Chest-Supported Row",4,"8-10",150,"Top cycle row weight."),E("Lat Pulldown (Wide)",3,"10-12",150,"Full stack focus."),E("1-Arm DB Row (Bench)",3,"10",70,"Heavy DB row."),E("Standing DB Bicep Curl",3,"10-12",40,"Arm pump."),E("Incline Cable Curl",3,"12",35,"Finished cycle.")],swim:SW("45-Min Interval Swimming")},
+ Wed:recovery("Post-Test Active Recovery",["Decompress.","Core focus.","Gentle mobility."],"Rest Day"),
+ Thu:{title:"Shoulders, Legs + Swim",focus:"Top Leg Press Performance",exercises:[E("Seated DB Shoulder Press",4,"8-10",55,"Shoulder finish."),E("DB Lateral Raises",4,"12-15",25,"Lateral heads."),E("Leg Press Machine",4,"10-12",335,"Top machine leg load!"),E("Seated Leg Curls",3,"12-15",130,"Hamstring strength."),E("Standing Calf Raises",3,"15",170,"Calf finish.")],swim:SW("45-Min Steady-State Swim")},
+ Fri:{title:"Upper Victory & Deload Swim",focus:"Cycle Wrap-Up & Active Deload",exercises:[E("Close-Grip Bench Press",3,"8",145,"Light speed work."),E("Seated Cable Face Pulls",3,"15",55,"Posterior balance."),E("DB Hammer Curls",3,"10-12",45,"Victory arm pump!")],swim:SW("45-Min Celebration Recovery Swim")}}
+};
+const DAYS=[["Mon","Chest & Tris"],["Tue","Back & Bis"],["Wed","Rehab / Core"],["Thu","Shoulders / Legs"],["Fri","Speed Upper"]];
+const KEY="workout_app_logs_v1";
+
+// ---------- State ----------
+function freshLogs(){
+  const L={};
+  for(const w in P){L[w]={};for(const d in P[w]){const p=P[w][d];
+    L[w][d]={completed:false,swimCompleted:false,swimNotes:"",swimDuration:p.swim.targetDuration,
+      exercises:p.exercises.map(ex=>({name:ex.name,sets:Array.from({length:ex.sets},()=>({weight:ex.targetWeight,reps:parseInt(ex.targetReps)||10,completed:false}))}))};}}
+  return L;
+}
+let logs; try{logs=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!logs||!logs[1])logs=freshLogs();
+let ui={week:1,day:"Mon"}; try{Object.assign(ui,JSON.parse(localStorage.getItem(KEY+"_ui"))||{})}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(logs));localStorage.setItem(KEY+"_ui",JSON.stringify(ui))}catch(e){}};
+
+// ---------- Calcs ----------
+function dayProgress(w,d){
+  const L=logs[w]?.[d]; if(!L)return 0; let t=0,c=0;
+  L.exercises.forEach(ex=>ex.sets.forEach(s=>{t++;if(s.completed)c++}));
+  if(P[w][d].swim.required){t++;if(L.swimCompleted)c++}
+  return t?Math.round(c/t*100):0;
+}
+const weekProgress=w=>Math.round(DAYS.reduce((a,[d])=>a+dayProgress(w,d),0)/DAYS.length);
+function bestE1RM(){
+  let max=0,best=null;
+  for(const w in logs)for(const d in logs[w])logs[w][d].exercises.forEach(ex=>{
+    const n=ex.name.toLowerCase(); if(!n.includes("bench press")||n.includes("close-grip"))return;
+    ex.sets.forEach(s=>{if(s.completed&&s.weight>0&&s.reps>0){const e=s.reps===1?s.weight:Math.round(s.weight*(1+s.reps/30));if(e>max){max=e;best=s}}});
+  });
+  return {max,best};
+}
+
+// ---------- Timer ----------
+let tLeft=0,tTotal=0,tInt=null,actx=null;
+const fmt=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+function chime(){try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();[0,.25,.5].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=880;g.gain.setValueAtTime(.2,actx.currentTime+t);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+t+.2);o.connect(g).connect(actx.destination);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+.2)})}catch(e){}}
+function startTimer(s){
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume()}catch(e){}
+  clearInterval(tInt);tLeft=tTotal=s;renderTimer();
+  tInt=setInterval(()=>{tLeft--;if(tLeft<=0){clearInterval(tInt);tInt=null;tLeft=0;chime();if(navigator.vibrate)navigator.vibrate([200,100,200])}renderTimer()},1000);
+}
+function stopTimer(){clearInterval(tInt);tInt=null;tLeft=0;renderTimer()}
+function renderTimer(){
+  const c=document.getElementById("clock");c.textContent=fmt(tLeft);c.classList.toggle("live",!!tInt);
+  document.getElementById("tbar").style.width=(tTotal&&tInt?tLeft/tTotal*100:0)+"%";
+  const b=document.getElementById("tmain");b.textContent=tInt?"Stop Timer":"Start 2m Rest";b.className="btn "+(tInt?"stop":"primary");
+}
+document.getElementById("presets").innerHTML=[60,90,120,180].map(s=>`<button class="btn" type="button" data-t="${s}">${s<120?s+"s":s/60+"m"}</button>`).join("");
+document.getElementById("presets").onclick=e=>{const t=e.target.dataset.t;if(t)startTimer(+t)};
+document.getElementById("tmain").onclick=()=>tInt?stopTimer():startTimer(120);
+
+// ---------- Render ----------
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const CHECK=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>`;
+const TRASH=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>`;
+
+function renderGoal(){
+  const {max,best}=bestE1RM();
+  document.getElementById("e1rm").textContent=max||185;
+  document.getElementById("best").textContent=best?`Best logged: ${best.weight} × ${best.reps}`:"";
+  const pct=Math.min(100,Math.round(max/262*100));
+  document.getElementById("benchbar").style.width=Math.max(10,pct)+"%";
+  document.getElementById("benchpct").textContent=pct+"% to target";
+}
+function renderNav(){
+  document.getElementById("weeks").innerHTML=`<span class="label" style="align-self:center;margin-right:4px">Week</span>`+
+    [1,2,3,4,5,6].map(w=>{const p=weekProgress(w);return `<button type="button" class="wk${ui.week===w?" on":""}" data-w="${w}">Week ${w}${p?`<span class="pct">${p}%</span>`:""}</button>`}).join("");
+  document.getElementById("days").innerHTML=DAYS.map(([d,t])=>{const p=dayProgress(ui.week,d);
+    return `<button type="button" class="day${ui.day===d?" on":""}" data-d="${d}"><span class="d">${d}${p===100?`<span class="ok">${CHECK}</span>`:p?`<span class="p">${p}%</span>`:""}</span><span class="t">${t}</span></button>`}).join("");
+}
+function ring(p){const r=22,c=2*Math.PI*r;return `<svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--sunk)" stroke-width="5"/><circle cx="26" cy="26" r="${r}" fill="none" stroke="${p===100?"var(--good)":"var(--accent)"}" stroke-width="5" stroke-linecap="round" stroke-dasharray="${c}" stroke-dashoffset="${c*(1-p/100)}" transform="rotate(-90 26 26)"/></svg>`}
+function renderDay(){
+  const w=ui.week,d=ui.day,p=P[w][d],L=logs[w][d],pr=dayProgress(w,d);
+  let h=`<div class="panel dayhead"><div><div class="label">Week ${w} · ${d}</div><h2>${esc(p.title)}</h2><div class="focus">Focus: <strong>${esc(p.focus)}</strong></div></div>
+    <div class="ring">${ring(pr)}<div><div class="label">Day</div><div class="v" id="dayPct">${pr}%</div></div></div></div>`;
+  L.exercises.forEach((ex,i)=>{const rx=p.exercises[i]||{};
+    h+=`<div class="panel ex"><div class="exhead"><div style="min-width:0"><h3>${i+1}. ${esc(ex.name)}</h3>${rx.note?`<p class="note">${esc(rx.note)}</p>`:""}</div>
+      <div class="rx">Rx <b>${rx.sets} × ${esc(rx.targetReps)}</b>${rx.targetWeight>0?` @ <b>${rx.targetWeight}</b> lbs`:""}</div></div>
+      <div class="rows"><div class="row hd label"><span>Set</span><span>Weight</span><span>Reps</span><span style="text-align:right">Done</span></div>`+
+      ex.sets.map((s,j)=>`<div class="row${s.completed?" done":""}">
+        <span class="n">#${j+1}</span>
+        <label class="field"><input id="w-${w}-${d}-${i}-${j}" type="number" inputmode="decimal" step="2.5" value="${s.weight}" data-e="${i}" data-s="${j}" data-f="weight" aria-label="Set ${j+1} weight"><span>lbs</span></label>
+        <label class="field"><input id="r-${w}-${d}-${i}-${j}" type="number" inputmode="numeric" value="${s.reps}" data-e="${i}" data-s="${j}" data-f="reps" aria-label="Set ${j+1} reps"><span>reps</span></label>
+        <span class="acts"><button type="button" class="chk${s.completed?" on":""}" data-act="toggle" data-e="${i}" data-s="${j}" aria-label="Mark set ${j+1} done">${CHECK}</button>${ex.sets.length>1?`<button type="button" class="del" data-act="del" data-e="${i}" data-s="${j}" aria-label="Remove set ${j+1}">${TRASH}</button>`:""}</span>
+      </div>`).join("")+
+      `</div><div class="add"><button type="button" class="btn" data-act="add" data-e="${i}">+ Add set</button></div></div>`;
+  });
+  if(p.swim.required){
+    h+=`<div class="panel swim"><div class="swimhead"><div><div class="label">Cardio · low knee impact</div><h3>${esc(p.swim.type)}</h3><p>Target: ${p.swim.targetDuration} minutes lap swimming</p></div>
+      <button type="button" class="btn${L.swimCompleted?" on":""}" data-act="swim">${L.swimCompleted?"Swim completed ✓":"Mark swim completed"}</button></div>
+      <label for="swimnotes-${w}-${d}">Swim notes / laps completed</label>
+      <input id="swimnotes-${w}-${d}" type="text" data-act="notes" value="${esc(L.swimNotes||"")}" placeholder="e.g. 1,500 yd freestyle. Knee felt fine."></div>`;
+  }
+  if(p.isRecovery){
+    h+=`<div class="recov"><b>Back decompression protocol</b><p>Slow, rhythmic breathing. Keep your lower spine neutral during Bird-Dogs and press your lower back flat during Dead Bugs to take load off the lower left lumbar area.</p><p style="color:var(--muted)">${esc(p.swim.type)}.</p></div>`;
+  }
+  document.getElementById("dayview").innerHTML=h;
+}
+function renderAll(){renderGoal();renderNav();renderDay()}
+function refreshMeta(){renderGoal();renderNav();const el=document.getElementById("dayPct");if(el){renderDay()}}
+
+// ---------- Events ----------
+document.getElementById("weeks").onclick=e=>{const b=e.target.closest("[data-w]");if(b){ui.week=+b.dataset.w;save();renderAll()}};
+document.getElementById("days").onclick=e=>{const b=e.target.closest("[data-d]");if(b){ui.day=b.dataset.d;save();renderAll()}};
+const dv=document.getElementById("dayview");
+dv.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]");if(!b||b.tagName==="INPUT")return;
+  const L=logs[ui.week][ui.day],i=+b.dataset.e,j=+b.dataset.s,act=b.dataset.act;
+  if(act==="toggle"){const s=L.exercises[i].sets[j];s.completed=!s.completed;
+    if(s.completed){const n=L.exercises[i].name.toLowerCase();startTimer(n.includes("bench press")&&!n.includes("close")?180:120)}}
+  else if(act==="del"){if(L.exercises[i].sets.length>1)L.exercises[i].sets.splice(j,1)}
+  else if(act==="add"){const s=L.exercises[i].sets;const last=s[s.length-1]||{weight:100,reps:10};s.push({weight:last.weight,reps:last.reps,completed:false})}
+  else if(act==="swim"){L.swimCompleted=!L.swimCompleted}
+  save();renderAll();
+});
+dv.addEventListener("input",e=>{
+  const t=e.target,L=logs[ui.week][ui.day];
+  if(t.dataset.act==="notes"){L.swimNotes=t.value;save();return}
+  if(t.dataset.f){const v=t.dataset.f==="weight"?parseFloat(t.value)||0:parseInt(t.value)||0;L.exercises[+t.dataset.e].sets[+t.dataset.s][t.dataset.f]=v;save();renderGoal()}
+});
+
+// Reset with in-page confirm
+const rb=document.getElementById("resetbox");
+rb.onclick=e=>{
+  const a=e.target.id;
+  if(a==="reset")rb.innerHTML=`<span>Erase every logged set?</span><button class="btn stop" id="yes" type="button">Erase</button><button class="btn" id="no" type="button">Cancel</button>`;
+  else if(a==="yes"){logs=freshLogs();save();renderAll();rb.innerHTML=`<button class="btn" id="reset" type="button">Reset all logs</button>`}
+  else if(a==="no")rb.innerHTML=`<button class="btn" id="reset" type="button">Reset all logs</button>`;
+};
+
+try{navigator.wakeLock?.request("screen").catch(()=>{})}catch(e){}
+renderAll();renderTimer();
+</script>
+
+</body>
+</html>
