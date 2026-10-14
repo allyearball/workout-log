@@ -28,6 +28,7 @@
   --fg:#e6edf3; --muted:#8a9bab; --accent:#3fb0e8; --accent-ink:#06121b; --accent-soft:#12324a;
   --good:#46c483; --good-soft:#12301f; --warn:#e3a54a; --warn-soft:#33240e; --bad:#f07068; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{overflow-x:clip;max-width:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
@@ -148,6 +149,49 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 60px;display:grid;gap:16px
   .field input{padding:7px 6px}
   .presets .btn{flex:1}
 }
+
+/* ---- view tabs ---- */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:4px}
+.tab{border:0;background:none;border-radius:6px;padding:8px;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.tab.on{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.view{display:grid;gap:16px}
+/* ---- weight ---- */
+.wform{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:8px;align-items:end}
+.wform label,.wset label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.wform input,.wset input{width:100%;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 9px;font-family:var(--mono);font-weight:700}
+.wform .btn{padding:10px 14px}
+.wmsg{min-height:18px;margin-top:6px;font-size:13px;color:var(--good)}
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tile{background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.tile .v{font-family:var(--display);font-weight:800;font-size:28px;line-height:1.05;white-space:nowrap}
+.tile .v small{font-family:var(--body);font-weight:500;font-size:13px;color:var(--muted)}
+.tile .s{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .v.good{color:var(--good)} .tile .v.bad{color:var(--bad)}
+.gbar{margin-top:12px;height:10px;background:var(--sunk);border-radius:3px;overflow:hidden}
+.gbar i{display:block;height:100%;background:var(--good);transition:width .5s}
+#wchart{width:100%;margin-top:4px}
+#wchart svg{display:block;width:100%;height:auto}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{display:inline-block;width:14px;height:0;border-top:2px solid var(--accent)}
+.legend i.dot{width:7px;height:7px;border:0;border-radius:50%;background:var(--muted);opacity:.6}
+.legend i.dash{border-top-style:dashed}
+.legend i.goal{border-top:2px dashed var(--good)}
+.wempty{padding:28px 8px;text-align:center;color:var(--muted);font-size:14px}
+.wlist{display:grid;gap:2px}
+.wrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto 30px;gap:12px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:14px}
+.wrow:last-child{border-bottom:0}
+.wrow .w{font-family:var(--mono);font-weight:700}
+.wrow .dl{font-family:var(--mono);font-size:12px;min-width:52px;text-align:right}
+.dn{color:var(--good)} .up{color:var(--bad)}
+.wset{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:320px}
+.sechead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+@media (max-width:520px){
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .tile .v{font-size:24px}
+  .wform{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .wform .btn{grid-column:1/-1}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -158,7 +202,7 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 60px;display:grid;gap:16px
   <div class="hwrap">
     <div class="brand">
       <h1>HYBRID PRO 6-WEEK LOG</h1>
-      <p>33yo Male · 220 lbs · Recomp &amp; 225 lb Bench Focus</p>
+      <p>33yo Male · <span id="hdrW">220</span> lbs · Recomp &amp; 225 lb Bench Focus</p>
     </div>
     <div class="chips">
       <span class="chip">Calories <b>2,200</b>/day</span>
@@ -168,6 +212,40 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 60px;display:grid;gap:16px
 </header>
 
 <main>
+  <nav class="tabs" id="tabs"><button type="button" class="tab on" data-v="train">Training</button><button type="button" class="tab" data-v="weight">Weight</button></nav>
+  <div class="view" id="view-weight" hidden>
+    <section class="panel">
+      <div class="label" style="margin-bottom:8px">Log weigh-in</div>
+      <form class="wform" id="wform">
+        <div><label for="wdate">Date</label><input id="wdate" type="date"></div>
+        <div><label for="wval">Weight (lbs)</label><input id="wval" type="number" inputmode="decimal" step="0.1" min="50" max="600" placeholder="221.4"></div>
+        <button class="btn primary" id="wsave" type="submit">Log weight</button>
+      </form>
+      <div class="wmsg" id="wmsg" role="status"></div>
+    </section>
+    <section class="panel">
+      <div class="tiles" id="wtiles"></div>
+      <div class="gbar"><i id="wgbar" style="width:0"></i></div>
+      <div class="ticks"><span id="wgl">Start</span><span class="num" id="wgp"></span><span id="wgr">Goal</span></div>
+    </section>
+    <section class="panel">
+      <div class="label">Weight trend &amp; projection</div>
+      <div id="wchart"></div>
+      <div class="legend"><span><i class="dot"></i>Weigh-in</span><span><i></i>Trend</span><span><i class="dash"></i>Projection</span><span><i class="goal"></i>Goal</span></div>
+    </section>
+    <section class="panel">
+      <div class="sechead"><div class="label">History</div><button type="button" class="btn" id="wmore" hidden>Show all</button></div>
+      <div class="wlist" id="wlist"></div>
+    </section>
+    <section class="panel">
+      <div class="label" style="margin-bottom:8px">Targets</div>
+      <div class="wset">
+        <div><label for="wstart">Start weight</label><input id="wstart" type="number" inputmode="decimal" step="0.1"></div>
+        <div><label for="wgoal">Goal weight</label><input id="wgoal" type="number" inputmode="decimal" step="0.1"></div>
+      </div>
+    </section>
+  </div>
+  <div class="view" id="view-train">
   <section class="top">
     <div class="panel">
       <div class="goal-head">
@@ -204,6 +282,7 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 60px;display:grid;gap:16px
   <div class="foot">
     <span>Logs save in this browser only.</span>
     <span class="confirm" id="resetbox"><button class="btn" id="reset" type="button">Reset all logs</button></span>
+  </div>
   </div>
 </main>
 
@@ -376,8 +455,127 @@ rb.onclick=e=>{
   else if(a==="no")rb.innerHTML=`<button class="btn" id="reset" type="button">Reset all logs</button>`;
 };
 
+// ---------- Weight ----------
+const WKEY="weight_log_v1",DAY=864e5;
+let wt={start:222,goal:175,entries:[]},wAll=false;
+try{const x=JSON.parse(localStorage.getItem(WKEY));if(x&&Array.isArray(x.entries))wt=Object.assign(wt,x)}catch(e){}
+const saveW=()=>{try{localStorage.setItem(WKEY,JSON.stringify(wt))}catch(e){}};
+const todayISO=()=>{const t=new Date();return new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+const dn=s=>Date.UTC(+s.slice(0,4),+s.slice(5,7)-1,+s.slice(8,10))/DAY;
+const fD=(n,y)=>new Date(n*DAY).toLocaleDateString("en-US",{month:"short",day:"numeric",...(y?{year:"numeric"}:{}),timeZone:"UTC"});
+const f1=v=>(Math.round(v*10)/10).toFixed(1);
+
+function wStats(){
+  const E=[...wt.entries].sort((a,b)=>a.d<b.d?-1:1);
+  if(!E.length)return{E,trend:[]};
+  let t=E[0].w;
+  const trend=E.map((e,i)=>{if(i){const g=dn(e.d)-dn(E[i-1].d);t+=(1-Math.pow(.9,g))*(e.w-t)}return{x:dn(e.d),y:t}});
+  const last=dn(E[E.length-1].d),cur=t;
+  const win=E.filter(e=>dn(e.d)>=last-27);
+  let slope=null;
+  if(win.length>=3&&dn(win[win.length-1].d)-dn(win[0].d)>=4){
+    const xs=win.map(e=>dn(e.d)),ys=win.map(e=>e.w),n=xs.length;
+    const mx=xs.reduce((a,b)=>a+b)/n,my=ys.reduce((a,b)=>a+b)/n;
+    let num=0,den=0;xs.forEach((x,i)=>{num+=(x-mx)*(ys[i]-my);den+=(x-mx)**2});
+    slope=den?num/den:null;
+  }
+  const eta=slope!==null&&slope<0&&cur>wt.goal?last+(cur-wt.goal)/-slope:null;
+  return{E,trend,last,cur,slope,eta};
+}
+
+function renderWeight(){
+  const S=wStats(),E=S.E;
+  document.getElementById("hdrW").textContent=E.length?f1(E[E.length-1].w).replace(/\.0$/,""):"220";
+  // tiles
+  const tile=(lab,v,sub,cls="")=>`<div class="tile"><div class="label">${lab}</div><div class="v ${cls}">${v}</div><div class="s">${sub}</div></div>`;
+  let h="";
+  if(!E.length){
+    h=tile("Trend","—","No weigh-ins yet")+tile("Lost","—",`Start ${f1(wt.start)}`)+tile("Rate","—","lb / week")+tile("Goal ETA","—",`Goal ${f1(wt.goal)}`);
+  }else{
+    const lost=wt.start-S.cur,rate=S.slope!==null?S.slope*7:null;
+    h=tile("Trend",`${f1(S.cur)}<small> lb</small>`,`Last: ${f1(E[E.length-1].w)} on ${fD(S.last)}`)
+     +tile(lost>=0?"Lost":"Gained",`${f1(Math.abs(lost))}<small> lb</small>`,`${f1(Math.max(0,S.cur-wt.goal))} lb to goal`,lost>0?"good":lost<0?"bad":"")
+     +tile("Rate",rate===null?"—":`${rate<=0?"−":"+"}${f1(Math.abs(rate))}<small> /wk</small>`,rate===null?"Needs 3 weigh-ins over 5+ days":"Last 28 days",rate===null?"":rate<0?"good":"bad")
+     +tile("Goal ETA",S.cur<=wt.goal?"Hit":S.eta?fD(S.eta):"—",S.cur<=wt.goal?"Goal reached":S.eta?`${Math.ceil((S.eta-S.last)/7)} wks · ${new Date(S.eta*DAY).getUTCFullYear()}`:(rate===null?"Not enough data":"Not trending down"),S.cur<=wt.goal||S.eta?"good":"");
+  }
+  document.getElementById("wtiles").innerHTML=h;
+  const span=wt.start-wt.goal,done=E.length&&span>0?Math.max(0,Math.min(100,(wt.start-S.cur)/span*100)):0;
+  document.getElementById("wgbar").style.width=done+"%";
+  document.getElementById("wgl").textContent=`Start ${f1(wt.start)}`;
+  document.getElementById("wgr").textContent=`Goal ${f1(wt.goal)}`;
+  document.getElementById("wgp").textContent=`${Math.round(done)}% of the way`;
+  renderWChart(S);
+  // history
+  const R=[...E].reverse(),show=wAll?R:R.slice(0,10);
+  document.getElementById("wlist").innerHTML=E.length?show.map(e=>{const i=E.indexOf(e),p=E[i-1],d=p?e.w-p.w:null;
+    return `<div class="wrow"><span>${fD(dn(e.d),true)}</span><span class="w">${f1(e.w)}</span><span class="dl ${d===null?"":d<0?"dn":d>0?"up":""}">${d===null?"start":(d>0?"+":d<0?"−":"±")+f1(Math.abs(d))}</span><button type="button" class="del" data-wd="${e.d}" aria-label="Delete ${e.d}">${TRASH}</button></div>`}).join("")
+    :`<div class="wempty">Weigh-ins show up here. Log one above.</div>`;
+  const m=document.getElementById("wmore");m.hidden=E.length<=10;m.textContent=wAll?"Show recent":`Show all (${E.length})`;
+  const dt=document.getElementById("wdate");
+  document.getElementById("wsave").textContent=wt.entries.some(e=>e.d===dt.value)?"Update weight":"Log weight";
+}
+
+function renderWChart(S){
+  const box=document.getElementById("wchart");
+  if(!S.E.length){box.innerHTML=`<div class="wempty">Log your first weigh-in to start the chart. The trend line and goal projection appear after 3 weigh-ins over 5+ days.</div>`;return}
+  const W=Math.max(300,box.clientWidth||400),H=Math.round(Math.min(300,Math.max(220,W*.62))),L=38,R=12,T=14,B=28;
+  const x0=dn(S.E[0].d);
+  let pEnd=null;
+  if(S.slope!==null&&S.slope<0&&S.cur>wt.goal)pEnd=Math.min(S.eta,S.last+365);
+  const x1=Math.max(S.last+14,pEnd||0,x0+14);
+  const vals=[...S.E.map(e=>e.w),wt.goal];
+  if(pEnd)vals.push(S.cur+S.slope*(pEnd-S.last));
+  const step=Math.max(...vals)-Math.min(...vals)>40?10:5;
+  const y0=Math.floor((Math.min(...vals)-1)/step)*step,y1=Math.ceil((Math.max(...vals)+1)/step)*step;
+  const sx=x=>L+(x-x0)/(x1-x0)*(W-L-R),sy=y=>T+(y1-y)/(y1-y0)*(H-T-B);
+  let g="";
+  for(let y=y0;y<=y1;y+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${sy(y)}" y2="${sy(y)}" stroke="var(--line)" stroke-width="1"/><text x="${L-6}" y="${sy(y)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="var(--mono)">${y}</text>`;
+  const nT=W<420?3:5;
+  for(let i=0;i<=nT;i++){const x=Math.round(x0+(x1-x0)*i/nT);g+=`<text x="${sx(x)}" y="${H-8}" text-anchor="${i===0?"start":i===nT?"end":"middle"}" font-size="11" fill="var(--muted)">${fD(x)}</text>`}
+  g+=`<line x1="${L}" x2="${W-R}" y1="${sy(wt.goal)}" y2="${sy(wt.goal)}" stroke="var(--good)" stroke-width="1.5" stroke-dasharray="5 4"/>`;
+  g+=`<text x="${L+6}" y="${sy(wt.goal)-6}" text-anchor="start" font-size="11" font-weight="600" fill="var(--good)">Goal ${f1(wt.goal)}</text>`;
+  g+=S.E.map(e=>`<circle cx="${sx(dn(e.d))}" cy="${sy(e.w)}" r="3" fill="var(--muted)" fill-opacity=".55"/>`).join("");
+  if(S.trend.length>1)g+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${S.trend.map(p=>sx(p.x)+","+sy(p.y)).join(" ")}"/>`;
+  if(pEnd){
+    const yE=S.cur+S.slope*(pEnd-S.last);
+    g+=`<line x1="${sx(S.last)}" y1="${sy(S.cur)}" x2="${sx(pEnd)}" y2="${sy(yE)}" stroke="var(--accent)" stroke-width="2" stroke-dasharray="6 5" stroke-opacity=".75"/>`;
+    if(S.eta<=S.last+365){
+      const ex=sx(pEnd),anchor=ex>W*.7?"end":"middle";
+      g+=`<circle cx="${ex}" cy="${sy(yE)}" r="5" fill="var(--good)" stroke="var(--surface)" stroke-width="2"/><text x="${ex}" y="${sy(yE)-12}" text-anchor="${anchor}" font-size="11" font-weight="600" fill="var(--fg)">${fD(pEnd,true)}</text>`;
+    }
+  }
+  g+=`<circle cx="${sx(S.last)}" cy="${sy(S.cur)}" r="5" fill="var(--accent)" stroke="var(--surface)" stroke-width="2"/>`;
+  box.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Weight trend chart">${g}</svg>`;
+}
+
+const wdate=document.getElementById("wdate");wdate.value=todayISO();wdate.max=todayISO();
+document.getElementById("wstart").value=wt.start;document.getElementById("wgoal").value=wt.goal;
+wdate.addEventListener("change",()=>{const e=wt.entries.find(x=>x.d===wdate.value);if(e)document.getElementById("wval").value=e.w;renderWeight()});
+document.getElementById("wform").addEventListener("submit",ev=>{
+  ev.preventDefault();
+  const d=wdate.value,v=parseFloat(document.getElementById("wval").value),msg=document.getElementById("wmsg");
+  if(!d||!(v>50&&v<600)){msg.style.color="var(--bad)";msg.textContent="Enter a date and a weight between 50 and 600 lbs.";return}
+  const i=wt.entries.findIndex(e=>e.d===d);
+  if(i>=0)wt.entries[i].w=v;else wt.entries.push({d,w:v});
+  saveW();msg.style.color="";msg.textContent=`${i>=0?"Updated":"Logged"} ${f1(v)} lbs for ${fD(dn(d))}.`;
+  document.activeElement?.blur?.();renderWeight();
+});
+document.getElementById("wlist").addEventListener("click",e=>{const b=e.target.closest("[data-wd]");if(!b)return;wt.entries=wt.entries.filter(x=>x.d!==b.dataset.wd);saveW();renderWeight()});
+document.getElementById("wmore").onclick=()=>{wAll=!wAll;renderWeight()};
+["wstart","wgoal"].forEach(id=>document.getElementById(id).addEventListener("change",e=>{const v=parseFloat(e.target.value);if(v>50&&v<600){wt[id==="wstart"?"start":"goal"]=v;saveW();renderWeight()}else e.target.value=wt[id==="wstart"?"start":"goal"]}));
+let rT;window.addEventListener("resize",()=>{clearTimeout(rT);rT=setTimeout(()=>{if(ui.view==="weight")renderWChart(wStats())},150)});
+
+function showView(v){
+  ui.view=v;save();
+  document.getElementById("view-train").hidden=v!=="train";
+  document.getElementById("view-weight").hidden=v!=="weight";
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.v===v));
+  renderWeight();
+}
+document.getElementById("tabs").onclick=e=>{const t=e.target.closest("[data-v]");if(t){showView(t.dataset.v);window.scrollTo(0,0)}};
+
 try{navigator.wakeLock?.request("screen").catch(()=>{})}catch(e){}
-renderAll();renderTimer();
+renderAll();renderTimer();showView(ui.view==='weight'?'weight':'train');
 </script>
 
 </body>
